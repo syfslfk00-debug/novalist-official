@@ -171,7 +171,7 @@
                                 "SUPPORTED_PLATFORMS[sdk=iphonesimulator*]" = "iphonesimulator";
                                 SWIFT_EMIT_LOC_STRINGS = NO;
                                 TARGETED_DEVICE_FAMILY = "1,2";
-                                TEST_HOST = "$(SRCROOT)/host/Novalist.Mobile.app/Novalist.Mobile";
+                                TEST_HOST = "$(SRCROOT)/../../Novalist.Mobile/bin/Release/net10.0-ios/iossimulator-arm64/Novalist.Mobile.app/Novalist.Mobile";
                                 WARNING_CFLAGS = "-w";
                         };
                         name = Debug;
@@ -204,7 +204,7 @@
                                 SUPPORTED_PLATFORMS = "iphonesimulator";
                                 SWIFT_EMIT_LOC_STRINGS = NO;
                                 TARGETED_DEVICE_FAMILY = "1,2";
-                                TEST_HOST = "$(SRCROOT)/host/Novalist.Mobile.app/Novalist.Mobile";
+                                TEST_HOST = "$(SRCROOT)/../../Novalist.Mobile/bin/Release/net10.0-ios/iossimulator-arm64/Novalist.Mobile.app/Novalist.Mobile";
                                 WARNING_CFLAGS = "-w";
                         };
                         name = Release;
