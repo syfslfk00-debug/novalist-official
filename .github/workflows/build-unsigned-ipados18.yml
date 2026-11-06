@@ -25,8 +25,10 @@ jobs:
       - name: Environment diagnostics
         run: |
           ls -d /Applications/Xcode* || true
-          sudo xcode-select -s /Applications/Xcode_26.0.app/Contents/Developer
+          sudo xcode-select -s /Applications/Xcode_26.0.1.app/Contents/Developer
           xcodebuild -version
+          xcodebuild -showsdks
+          ls -la /Applications/Xcode_26.0.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/
           dotnet --info
       - name: Install MAUI iOS workload
         run: dotnet workload install maui-ios --version 10.0.100
