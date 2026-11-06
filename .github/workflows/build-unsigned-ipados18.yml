@@ -35,7 +35,7 @@ jobs:
           npm run build:mobile
       - name: Publish unsigned iOS app
         run: |
-          dotnet publish Novalist.Mobile/Novalist.Mobile.csproj -c Release -f net10.0-ios -r ios-arm64 -p:ArchiveOnBuild=false -p:BuildIpa=false -p:EnableCodeSigning=false -p:CodesignKey= -p:CodesignProvision= -p:RuntimeIdentifier=ios-arm64 -o "$RUNNER_TEMP/novalist-publish"
+          dotnet publish Novalist.Mobile/Novalist.Mobile.csproj -c Release -f net10.0-ios -r ios-arm64 -p:ArchiveOnBuild=false -p:BuildIpa=false -p:EnableCodeSigning=false -p:CodesignKey= -p:CodesignProvision= -p:RuntimeIdentifier=ios-arm64 -p:_IgnoreXcodeVersion=true -o "$RUNNER_TEMP/novalist-publish"
       - name: Package unsigned IPA
         shell: bash
         run: |
