@@ -27,7 +27,7 @@ jobs:
           xcodebuild -version
           dotnet --info
       - name: Install MAUI iOS workload
-        run: dotnet workload install maui-ios
+        run: dotnet workload install maui-ios --version 10.0.100
       - name: Build mobile web assets
         working-directory: app
         run: |
