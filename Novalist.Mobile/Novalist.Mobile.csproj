@@ -13,7 +13,7 @@
 
   <PropertyGroup>
     <!-- iOS first for the spike. Add net10.0-android here in Phase 0's Android half. -->
-    <TargetFramework>net10.0-ios27.0</TargetFramework>
+    <TargetFramework>net10.0-ios</TargetFramework>
     <OutputType>Exe</OutputType>
     <UseMaui>true</UseMaui>
     <SingleProject>true</SingleProject>
@@ -30,11 +30,11 @@
          (universal purchase) instead of a second, separate app. Do not "fix"
          this to a mobile-specific ID — that would split the record in two. -->
     <ApplicationTitle>Novalist</ApplicationTitle>
-    <ApplicationId>com.novalist.app</ApplicationId>
+    <ApplicationId>com.syfslfk00.novalist</ApplicationId>
     <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
 
-    <SupportedOSPlatformVersion>27.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion>18.0</SupportedOSPlatformVersion>
 
     <!--
       Novalist.Backend is OutputType=Exe (the desktop stdio host). We reference it
