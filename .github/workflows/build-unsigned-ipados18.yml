@@ -73,23 +73,24 @@ jobs:
             -p:_IgnoreXcodeVersion=true \
             -o "$RUNNER_TEMP/novalist-publish-device"
 
-      - name: Publish simulator app (iossimulator-arm64)
+      - name: Build simulator app (iossimulator-arm64)
+        # dotnet publish refuses simulator RIDs (device-only by design), so the
+        # simulator bundle comes from dotnet build - same as the project's own
+        # dev-simulator flow.
         run: |
-          dotnet publish Novalist.Mobile/Novalist.Mobile.csproj \
-            -c Release -f net10.0-ios -r iossimulator-arm64 \
-            -p:ArchiveOnBuild=false -p:BuildIpa=false \
+          dotnet build Novalist.Mobile/Novalist.Mobile.csproj \
+            -c Release -f net10.0-ios \
             -p:RuntimeIdentifier=iossimulator-arm64 \
-            -p:_IgnoreXcodeVersion=true \
-            -o "$RUNNER_TEMP/novalist-publish-sim"
+            -p:_IgnoreXcodeVersion=true
 
       - name: Locate .app bundles
         run: |
           set -euo pipefail
           DEVICE_APP=$(find "$RUNNER_TEMP/novalist-publish-device" -type d -name '*.app' -print -quit)
-          SIM_APP=$(find "$RUNNER_TEMP/novalist-publish-sim" -type d -name '*.app' -print -quit)
+          SIM_APP=$(find Novalist.Mobile/bin "$RUNNER_TEMP/novalist-publish-sim" -type d -name '*.app' -print -quit 2>/dev/null || true)
           if [[ -z "$DEVICE_APP" || -z "$SIM_APP" ]]; then
             echo "::error::Missing .app output"
-            find "$RUNNER_TEMP/novalist-publish-device" "$RUNNER_TEMP/novalist-publish-sim" -maxdepth 3 | head -60
+            find "$RUNNER_TEMP/novalist-publish-device" Novalist.Mobile/bin -maxdepth 5 -type d -name '*.app' 2>/dev/null | head -20
             exit 1
           fi
           echo "DEVICE_APP=$DEVICE_APP" >> "$GITHUB_ENV"
