@@ -1,248 +1,236 @@
 // !$*UTF8*$!
 {
-	archiveVersion = 1;
-	classes = {
-	};
-	objectVersion = 56;
-	objects = {
+        archiveVersion = 1;
+        classes = {
+        };
+        objectVersion = 56;
+        objects = {
 
 /* Begin PBXBuildFile section */
-		4A0000000000000000000002 /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0000000000000000000001 /* SmokeTests.swift */; };
-		4A0000000000000000000005 /* SmokeTests.xctest in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A0000000000000000000004 /* SmokeTests.xctest */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+                4A0000000000000000000002 /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0000000000000000000001 /* SmokeTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		4A0000000000000000000001 /* SmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeTests.swift; sourceTree = "<group>"; };
-		4A0000000000000000000004 /* SmokeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmokeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		4A0000000000000000000006 /* SmokeTests */ = {isa = PBXFileReference; lastKnownFileType = text; path = SmokeTests; sourceTree = "<group>"; };
+                4A0000000000000000000001 /* SmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeTests.swift; sourceTree = "<group>"; };
+                4A0000000000000000000004 /* SmokeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmokeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+                4A0000000000000000000006 /* SmokeTests */ = {isa = PBXFileReference; lastKnownFileType = text; path = SmokeTests; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFrameworksBuildPhase section */
-		4A0000000000000000000008 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				4A0000000000000000000005 /* SmokeTests.xctest in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
-
 /* Begin PBXGroup section */
-		4A0000000000000000000011 /* = */ = {
-			isa = PBXGroup;
-			children = (
-				4A0000000000000000000006 /* SmokeTests */,
-				4A0000000000000000000003 /* Products */,
-			);
-			sourceTree = "<group>";
-			name = SmokeTestsProject;
-		};
-		4A0000000000000000000003 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				4A0000000000000000000004 /* SmokeTests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
+                4A0000000000000000000011 /* SmokeTestsProject */ = {
+                        isa = PBXGroup;
+                        children = (
+                                4A0000000000000000000006 /* SmokeTests */,
+                                4A0000000000000000000001 /* SmokeTests.swift */,
+                                4A0000000000000000000003 /* Products */,
+                        );
+                        sourceTree = "<group>";
+                        name = SmokeTestsProject;
+                };
+                4A0000000000000000000003 /* Products */ = {
+                        isa = PBXGroup;
+                        children = (
+                                4A0000000000000000000004 /* SmokeTests.xctest */,
+                        );
+                        name = Products;
+                        sourceTree = "<group>";
+                };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		4A0000000000000000000009 /* SmokeTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 4A000000000000000000000F /* Build configuration list for PBXNativeTarget "SmokeTests" */;
-			buildPhases = (
-				4A0000000000000000000007 /* Sources */,
-				4A0000000000000000000008 /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = SmokeTests;
-			productName = SmokeTests;
-			productReference = 4A0000000000000000000004 /* SmokeTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
+                4A0000000000000000000009 /* SmokeTests */ = {
+                        isa = PBXNativeTarget;
+                        buildConfigurationList = 4A000000000000000000000F /* Build configuration list for PBXNativeTarget "SmokeTests" */;
+                        buildPhases = (
+                                4A0000000000000000000007 /* Sources */,
+                        );
+                        buildRules = (
+                        );
+                        dependencies = (
+                        );
+                        name = SmokeTests;
+                        productName = SmokeTests;
+                        productReference = 4A0000000000000000000004 /* SmokeTests.xctest */;
+                        productType = "com.apple.product-type.bundle.unit-test";
+                };
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		4A0000000000000000000010 /* Project object */ = {
-			isa = PBXProject;
-			attributes = {
-				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1600;
-				LastUpgradeCheck = 1600;
-				TargetAttributes = {
-					4A0000000000000000000009 = {
-						CreatedOnToolsVersion = 16.0;
-						TestTargetID = 4A0000000000000000000009;
-					};
-				};
-			};
-			buildConfigurationList = 4A000000000000000000000E /* Build configuration list for PBXProject "SmokeTests" */;
-			developmentRegion = en;
-			hasScannedForEncodings = 0;
-			knownRegions = (
-				en,
-				Base,
-			);
-			mainGroup = 4A0000000000000000000011;
-			productRefGroup = 4A0000000000000000000003 /* Products */;
-			projectDirPath = "";
-			projectRoot = "";
-			targets = (
-				4A0000000000000000000009 /* SmokeTests */,
-			);
-		};
+                4A0000000000000000000010 /* Project object */ = {
+                        isa = PBXProject;
+                        attributes = {
+                                BuildIndependentTargetsInParallel = 1;
+                                LastSwiftUpdateCheck = 1600;
+                                LastUpgradeCheck = 1600;
+                                TargetAttributes = {
+                                        4A0000000000000000000009 = {
+                                                CreatedOnToolsVersion = 16.0;
+                                                TestTargetID = 4A0000000000000000000009;
+                                        };
+                                };
+                        };
+                        buildConfigurationList = 4A000000000000000000000E /* Build configuration list for PBXProject "SmokeTests" */;
+                        developmentRegion = en;
+                        hasScannedForEncodings = 0;
+                        knownRegions = (
+                                en,
+                                Base,
+                        );
+                        mainGroup = 4A0000000000000000000011;
+                        productRefGroup = 4A0000000000000000000003 /* Products */;
+                        projectDirPath = "";
+                        projectRoot = "";
+                        targets = (
+                                4A0000000000000000000009 /* SmokeTests */,
+                        );
+                };
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
-		4A0000000000000000000007 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				4A0000000000000000000002 /* SmokeTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
+                4A0000000000000000000007 /* Sources */ = {
+                        isa = PBXSourcesBuildPhase;
+                        buildActionMask = 2147483647;
+                        files = (
+                                4A0000000000000000000002 /* SmokeTests.swift in Sources */,
+                        );
+                        runOnlyForDeploymentPostprocessing = 0;
+                };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		4A000000000000000000000A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
-			};
-			name = Debug;
-		};
-		4A000000000000000000000B /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				SDKROOT = iphoneos;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_VERSION = 5.0;
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		4A000000000000000000000C /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(DEVELOPER_DIR)/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks",
-					"$(DEVELOPER_DIR)/Platforms/iPhoneOS.platform/Developer/Library/Frameworks",
-				);
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				OTHER_LDFLAGS = (
-					"-framework",
-					XCTest,
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.syfslfk00.novalist.smoketests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphonesimulator";
-				"SUPPORTED_PLATFORMS[sdk=iphonesimulator*]" = "iphonesimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(SRCROOT)/host/Novalist.Mobile.app/Novalist.Mobile";
-				WARNING_CFLAGS = "-w";
-			};
-			name = Debug;
-		};
-		4A000000000000000000000D /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(DEVELOPER_DIR)/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks",
-					"$(DEVELOPER_DIR)/Platforms/iPhoneOS.platform/Developer/Library/Frameworks",
-				);
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				OTHER_LDFLAGS = (
-					"-framework",
-					XCTest,
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.syfslfk00.novalist.smoketests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphonesimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(SRCROOT)/host/Novalist.Mobile.app/Novalist.Mobile";
-				WARNING_CFLAGS = "-w";
-			};
-			name = Release;
-		};
+                4A000000000000000000000A /* Debug */ = {
+                        isa = XCBuildConfiguration;
+                        buildSettings = {
+                                ALWAYS_SEARCH_USER_PATHS = NO;
+                                CLANG_ENABLE_MODULES = YES;
+                                CLANG_ENABLE_OBJC_ARC = YES;
+                                COPY_PHASE_STRIP = NO;
+                                DEBUG_INFORMATION_FORMAT = dwarf;
+                                ENABLE_STRICT_OBJC_MSGSEND = YES;
+                                ENABLE_TESTABILITY = YES;
+                                GCC_OPTIMIZATION_LEVEL = 0;
+                                GCC_PREPROCESSOR_DEFINITIONS = (
+                                        "DEBUG=1",
+                                        "$(inherited)",
+                                );
+                                IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+                                MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+                                ONLY_ACTIVE_ARCH = YES;
+                                SDKROOT = iphoneos;
+                                SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+                                SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+                                SWIFT_VERSION = 5.0;
+                        };
+                        name = Debug;
+                };
+                4A000000000000000000000B /* Release */ = {
+                        isa = XCBuildConfiguration;
+                        buildSettings = {
+                                ALWAYS_SEARCH_USER_PATHS = NO;
+                                CLANG_ENABLE_MODULES = YES;
+                                CLANG_ENABLE_OBJC_ARC = YES;
+                                COPY_PHASE_STRIP = NO;
+                                DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+                                ENABLE_NS_ASSERTIONS = NO;
+                                ENABLE_STRICT_OBJC_MSGSEND = YES;
+                                IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+                                SDKROOT = iphoneos;
+                                SWIFT_COMPILATION_MODE = wholemodule;
+                                SWIFT_VERSION = 5.0;
+                                VALIDATE_PRODUCT = YES;
+                        };
+                        name = Release;
+                };
+                4A000000000000000000000C /* Debug */ = {
+                        isa = XCBuildConfiguration;
+                        buildSettings = {
+                                BUNDLE_LOADER = "$(TEST_HOST)";
+                                CODE_SIGNING_ALLOWED = NO;
+                                CODE_SIGNING_REQUIRED = NO;
+                                CODE_SIGN_IDENTITY = "";
+                                FRAMEWORK_SEARCH_PATHS = (
+                                        "$(inherited)",
+                                        "$(DEVELOPER_DIR)/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks",
+                                        "$(DEVELOPER_DIR)/Platforms/iPhoneOS.platform/Developer/Library/Frameworks",
+                                );
+                                GENERATE_INFOPLIST_FILE = YES;
+                                INFOPLIST_KEY_NSHumanReadableCopyright = "";
+                                IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+                                LD_RUNPATH_SEARCH_PATHS = (
+                                        "$(inherited)",
+                                        "@executable_path/Frameworks",
+                                        "@loader_path/Frameworks",
+                                );
+                                OTHER_LDFLAGS = (
+                                        "-framework",
+                                        XCTest,
+                                );
+                                PRODUCT_BUNDLE_IDENTIFIER = com.syfslfk00.novalist.smoketests;
+                                PRODUCT_NAME = "$(TARGET_NAME)";
+                                SUPPORTED_PLATFORMS = "iphonesimulator";
+                                "SUPPORTED_PLATFORMS[sdk=iphonesimulator*]" = "iphonesimulator";
+                                SWIFT_EMIT_LOC_STRINGS = NO;
+                                TARGETED_DEVICE_FAMILY = "1,2";
+                                TEST_HOST = "$(SRCROOT)/host/Novalist.Mobile.app/Novalist.Mobile";
+                                WARNING_CFLAGS = "-w";
+                        };
+                        name = Debug;
+                };
+                4A000000000000000000000D /* Release */ = {
+                        isa = XCBuildConfiguration;
+                        buildSettings = {
+                                BUNDLE_LOADER = "$(TEST_HOST)";
+                                CODE_SIGNING_ALLOWED = NO;
+                                CODE_SIGNING_REQUIRED = NO;
+                                CODE_SIGN_IDENTITY = "";
+                                FRAMEWORK_SEARCH_PATHS = (
+                                        "$(inherited)",
+                                        "$(DEVELOPER_DIR)/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks",
+                                        "$(DEVELOPER_DIR)/Platforms/iPhoneOS.platform/Developer/Library/Frameworks",
+                                );
+                                GENERATE_INFOPLIST_FILE = YES;
+                                IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+                                LD_RUNPATH_SEARCH_PATHS = (
+                                        "$(inherited)",
+                                        "@executable_path/Frameworks",
+                                        "@loader_path/Frameworks",
+                                );
+                                OTHER_LDFLAGS = (
+                                        "-framework",
+                                        XCTest,
+                                );
+                                PRODUCT_BUNDLE_IDENTIFIER = com.syfslfk00.novalist.smoketests;
+                                PRODUCT_NAME = "$(TARGET_NAME)";
+                                SUPPORTED_PLATFORMS = "iphonesimulator";
+                                SWIFT_EMIT_LOC_STRINGS = NO;
+                                TARGETED_DEVICE_FAMILY = "1,2";
+                                TEST_HOST = "$(SRCROOT)/host/Novalist.Mobile.app/Novalist.Mobile";
+                                WARNING_CFLAGS = "-w";
+                        };
+                        name = Release;
+                };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		4A000000000000000000000E /* Build configuration list for PBXProject "SmokeTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				4A000000000000000000000A /* Debug */,
-				4A000000000000000000000B /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		4A000000000000000000000F /* Build configuration list for PBXNativeTarget "SmokeTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				4A000000000000000000000C /* Debug */,
-				4A000000000000000000000D /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
+                4A000000000000000000000E /* Build configuration list for PBXProject "SmokeTests" */ = {
+                        isa = XCConfigurationList;
+                        buildConfigurations = (
+                                4A000000000000000000000A /* Debug */,
+                                4A000000000000000000000B /* Release */,
+                        );
+                        defaultConfigurationIsVisible = 0;
+                        defaultConfigurationName = Release;
+                };
+                4A000000000000000000000F /* Build configuration list for PBXNativeTarget "SmokeTests" */ = {
+                        isa = XCConfigurationList;
+                        buildConfigurations = (
+                                4A000000000000000000000C /* Debug */,
+                                4A000000000000000000000D /* Release */,
+                        );
+                        defaultConfigurationIsVisible = 0;
+                        defaultConfigurationName = Release;
+                };
 /* End XCConfigurationList section */
-	};
-	rootObject = 4A0000000000000000000010 /* Project object */;
+        };
+        rootObject = 4A0000000000000000000010 /* Project object */;
 }
