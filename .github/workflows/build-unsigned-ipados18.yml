@@ -161,7 +161,9 @@ jobs:
           checks["supported_platform_iphoneos"] = plist.get("CFBundleSupportedPlatforms") == ["iPhoneOS"]
           checks["no_provisioning_profile"] = not os.path.exists(os.path.join(app, "embedded.mobileprovision"))
           checks["web_entry_present"] = os.path.exists(os.path.join(app, "app", "index.mobile.html"))
-          checks["hybrid_bridge_present"] = os.path.exists(os.path.join(app, "_framework", "hybridwebview.js"))
+          # _framework/hybridwebview.js is served VIRTUALLY by MAUI's HybridWebView
+          # handler at runtime - it must NOT exist as a physical file.
+          checks["maui_controls_dll_present"] = os.path.exists(os.path.join(app, "Microsoft.Maui.Controls.dll"))
           checks["editor_assets_present"] = os.path.isdir(os.path.join(app, "app", "editor"))
           checks["skia_framework_arm64"] = "arm64" in sh(
             f"lipo -archs '{app}/Frameworks/libSkiaSharp.framework/libSkiaSharp'")
