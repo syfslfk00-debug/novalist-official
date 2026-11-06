@@ -363,6 +363,14 @@ jobs:
           set -euo pipefail
           mkdir -p tests/iOS.Smoke/host
           cp -R sim-unpacked/Novalist.Mobile.sim.app tests/iOS.Smoke/host/Novalist.Mobile.app
+          # Fail early with a clear diagnostic if XCTest's configured host is missing.
+          TEST_HOST_EXEC="Novalist.Mobile/bin/Release/net10.0-ios/iossimulator-arm64/Novalist.Mobile.app/Novalist.Mobile"
+          if [[ ! -f "$TEST_HOST_EXEC" ]]; then
+            echo "::error::XCTest TEST_HOST executable missing: $TEST_HOST_EXEC"
+            find Novalist.Mobile/bin/Release -name Novalist.Mobile -type f -print || true
+            exit 1
+          fi
+          ls -lh "$TEST_HOST_EXEC"
           set +e
           xcodebuild test \
             -project tests/iOS.Smoke/SmokeTests.xcodeproj \
