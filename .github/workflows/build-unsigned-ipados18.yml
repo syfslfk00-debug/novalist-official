@@ -44,8 +44,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          APP=$(find "$RUNNER_TEMP/novalist-publish" -maxdepth 2 -name '*.app' -type d | head -n 1)
-          test -n "$APP"
+          APP=$(find "$RUNNER_TEMP/novalist-publish" "$GITHUB_WORKSPACE/Novalist.Mobile/bin/Release/net10.0-ios/ios-arm64" "$GITHUB_WORKSPACE/Novalist.Mobile/obj/Release/net10.0-ios/ios-arm64" -type d -name '*.app' -print -quit 2>/dev/null || true)
+          if [[ -z "$APP" ]]; then
+            echo "::error::No .app bundle found after successful dotnet publish"
+            find "$RUNNER_TEMP/novalist-publish" "$GITHUB_WORKSPACE/Novalist.Mobile/bin/Release/net10.0-ios/ios-arm64" -maxdepth 5 -type d 2>/dev/null | tail -80
+            exit 1
+          fi
+          echo "Packaging app bundle: $APP"
           mkdir -p "$RUNNER_TEMP/ipa/Payload" "$GITHUB_WORKSPACE/output"
           cp -R "$APP" "$RUNNER_TEMP/ipa/Payload/"
           (cd "$RUNNER_TEMP/ipa" && zip -qry "$GITHUB_WORKSPACE/output/Novalist-iPadOS18-unsigned.ipa" Payload)
