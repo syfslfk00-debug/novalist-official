@@ -1,12 +1,22 @@
 name: Build unsigned iPadOS 18 IPA
 
-# Builds the Novalist MAUI iOS app two ways and proves it works:
-#   1. Device build (ios-arm64)      -> unsigned IPA (Payload/Novalist.Mobile.app)
-#   2. Simulator build (arm64)       -> installed on an iPad simulator and driven
-#       by hosted XCTest smoke tests (tests/iOS.Smoke) that create a novel,
-#       write Arabic content, restart the app, and verify persistence.
-# Every run uploads the IPA, the verification report, screenshots, logs and the
-# raw xcresult so the evidence travels with the artifact.
+# Single-runner pipeline (macOS ARM64 runner allocation is capacity-limited,
+# so everything happens on one job instead of queueing a second one):
+#
+#   1. Build the device app (ios-arm64)        -> unsigned IPA
+#   2. Build the simulator app (iossimulator-arm64)
+#   3. Statically verify the IPA               (Payload structure,
+#      MinimumOSVersion <= 18.5, arm64-only slices, iPad device family, ...)
+#   4. Install the simulator build on an iPad simulator, prefer the iPadOS
+#      18.5 runtime (downloaded from Apple when missing), take first-launch
+#      and cold-restart screenshots
+#   5. Run the hosted XCTest smoke suite (tests/iOS.Smoke) inside the app:
+#      boot assertions, novel creation, Arabic content through scenes/write,
+#      persistence on disk, codex entities, Markdown export, then a cold
+#      restart and a persistence re-verification
+#
+# Every run uploads the IPA, the verification report, screenshots, simulator
+# logs, memory snapshots and the raw xcresult bundles as evidence.
 
 on:
   push:
@@ -26,13 +36,10 @@ env:
   WORKLOAD_VERSION: 10.0.100
 
 jobs:
-  # --------------------------------------------------------------------------
-  # Job 1: build device + simulator bundles, package IPA, verify it.
-  # --------------------------------------------------------------------------
-  build:
-    name: Build & verify unsigned IPA
+  build-and-test:
+    name: Build, verify & smoke-test unsigned IPA
     runs-on: macos-15
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -223,6 +230,8 @@ jobs:
             print(f"| {rel} | {size/1048576:.2f} MB |")
           PYEOF
 
+      # IPA is uploaded BEFORE the simulator phase so a test failure can never
+      # cost us the artifact.
       - name: Upload IPA + verification artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -239,33 +248,11 @@ jobs:
           path: output/Novalist-simulator-arm64.app.zip
           if-no-files-found: error
 
-  # --------------------------------------------------------------------------
-  # Job 2: install the simulator build on an iPad simulator and run the hosted
-  # XCTest smoke suite (boot, novel creation, Arabic content, restart
-  # persistence, codex, export). Produces screenshots, logs and an xcresult.
-  # --------------------------------------------------------------------------
-  simulator-tests:
-    name: iPad simulator smoke tests
-    runs-on: macos-15
-    needs: build
-    timeout-minutes: 75
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download simulator app
-        uses: actions/download-artifact@v4
-        with:
-          name: Novalist-simulator-app
-          path: sim-download
-
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Diagnostics
+      # =====================================================================
+      # Simulator phase - runs on this same runner (no second allocation).
+      # =====================================================================
+      - name: Simulator diagnostics
         run: |
-          sudo xcode-select -s "$XCODE_PATH"
-          xcodebuild -version
           xcrun simctl runtime list || true
           xcrun simctl list devicetypes | grep -i ipad | head -20
 
@@ -273,7 +260,6 @@ jobs:
       # not installed and cannot be downloaded from Apple, fall back to the
       # closest available iOS 18.x runtime and document the difference.
       - name: Select or install simulator runtime
-        id: runtime
         timeout-minutes: 35
         run: |
           set -euo pipefail
@@ -341,7 +327,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p evidence screenshots
-          unzip -q -o sim-download/Novalist-simulator-arm64.app.zip -d sim-unpacked
+          unzip -q -o output/Novalist-simulator-arm64.app.zip -d sim-unpacked
           APP_DIR=$(find sim-unpacked -type d -name '*.app' -print -quit)
           echo "Installing: $APP_DIR"
           xcrun simctl install "$SIM_UDID" "$APP_DIR"
@@ -351,7 +337,7 @@ jobs:
           pgrep -fl "Novalist.Mobile.app" | tee evidence/processes-25s.txt || true
           if ! pgrep -f "Novalist.Mobile.app" >/dev/null; then
             echo "::error::App process is not running 25s after first launch"
-            xcrun simctl spawn "$SIM_UDID" log show --last 2m > evidence/crash-window.log || true
+            xcrun simctl spawn "$SIM_UDID" log show --last 2m > evidence/first-launch-crash-window.log || true
             exit 1
           fi
           # Cold restart: terminate and relaunch.
