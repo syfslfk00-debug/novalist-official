@@ -1,5 +1,13 @@
 name: Build unsigned iPadOS 18 IPA
 
+# Builds the Novalist MAUI iOS app two ways and proves it works:
+#   1. Device build (ios-arm64)      -> unsigned IPA (Payload/Novalist.Mobile.app)
+#   2. Simulator build (arm64)       -> installed on an iPad simulator and driven
+#       by hosted XCTest smoke tests (tests/iOS.Smoke) that create a novel,
+#       write Arabic content, restart the app, and verify persistence.
+# Every run uploads the IPA, the verification report, screenshots, logs and the
+# raw xcresult so the evidence travels with the artifact.
+
 on:
   push:
     branches: [build/ipados18-unsigned-ipa]
@@ -8,55 +16,453 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: build-unsigned-ipados18-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  APP_ID: com.syfslfk00.novalist
+  XCODE_PATH: /Applications/Xcode_26.0.1.app/Contents/Developer
+  WORKLOAD_VERSION: 10.0.100
+
 jobs:
-  ipa:
+  # --------------------------------------------------------------------------
+  # Job 1: build device + simulator bundles, package IPA, verify it.
+  # --------------------------------------------------------------------------
+  build:
+    name: Build & verify unsigned IPA
     runs-on: macos-15
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: app/package-lock.json
+
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+
       - name: Environment diagnostics
         run: |
           ls -d /Applications/Xcode* || true
-          sudo xcode-select -s /Applications/Xcode_26.0.1.app/Contents/Developer
+          sudo xcode-select -s "$XCODE_PATH"
           xcodebuild -version
-          xcodebuild -showsdks
-          ls -la /Applications/Xcode_26.0.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/
-          dotnet --info
+          xcodebuild -showsdks | grep -E 'iphoneos|iphonesimulator' || true
+          dotnet --info | head -20
+
       - name: Install MAUI iOS workload
-        run: dotnet workload install maui-ios --version 10.0.100
+        run: dotnet workload install maui-ios --version $WORKLOAD_VERSION
+
       - name: Build mobile web assets
         working-directory: app
         run: |
           npm ci
           npm run build:mobile
-      - name: Publish unsigned iOS app
+
+      - name: Publish device app (ios-arm64)
         run: |
-          dotnet publish Novalist.Mobile/Novalist.Mobile.csproj -c Release -f net10.0-ios -r ios-arm64 -p:ArchiveOnBuild=false -p:BuildIpa=false -p:EnableCodeSigning=false -p:CodesignKey= -p:CodesignProvision= -p:RuntimeIdentifier=ios-arm64 -p:_IgnoreXcodeVersion=true -o "$RUNNER_TEMP/novalist-publish"
-      - name: Package unsigned IPA
-        shell: bash
+          dotnet publish Novalist.Mobile/Novalist.Mobile.csproj \
+            -c Release -f net10.0-ios -r ios-arm64 \
+            -p:ArchiveOnBuild=false -p:BuildIpa=false \
+            -p:EnableCodeSigning=false -p:CodesignKey= -p:CodesignProvision= \
+            -p:RuntimeIdentifier=ios-arm64 \
+            -p:_IgnoreXcodeVersion=true \
+            -o "$RUNNER_TEMP/novalist-publish-device"
+
+      - name: Publish simulator app (iossimulator-arm64)
+        run: |
+          dotnet publish Novalist.Mobile/Novalist.Mobile.csproj \
+            -c Release -f net10.0-ios -r iossimulator-arm64 \
+            -p:ArchiveOnBuild=false -p:BuildIpa=false \
+            -p:RuntimeIdentifier=iossimulator-arm64 \
+            -p:_IgnoreXcodeVersion=true \
+            -o "$RUNNER_TEMP/novalist-publish-sim"
+
+      - name: Locate .app bundles
         run: |
           set -euo pipefail
-          APP=$(find "$RUNNER_TEMP/novalist-publish" "$GITHUB_WORKSPACE/Novalist.Mobile/bin/Release/net10.0-ios/ios-arm64" "$GITHUB_WORKSPACE/Novalist.Mobile/obj/Release/net10.0-ios/ios-arm64" -type d -name '*.app' -print -quit 2>/dev/null || true)
-          if [[ -z "$APP" ]]; then
-            echo "::error::No .app bundle found after successful dotnet publish"
-            find "$RUNNER_TEMP/novalist-publish" "$GITHUB_WORKSPACE/Novalist.Mobile/bin/Release/net10.0-ios/ios-arm64" -maxdepth 5 -type d 2>/dev/null | tail -80
+          DEVICE_APP=$(find "$RUNNER_TEMP/novalist-publish-device" -type d -name '*.app' -print -quit)
+          SIM_APP=$(find "$RUNNER_TEMP/novalist-publish-sim" -type d -name '*.app' -print -quit)
+          if [[ -z "$DEVICE_APP" || -z "$SIM_APP" ]]; then
+            echo "::error::Missing .app output"
+            find "$RUNNER_TEMP/novalist-publish-device" "$RUNNER_TEMP/novalist-publish-sim" -maxdepth 3 | head -60
             exit 1
           fi
-          echo "Packaging app bundle: $APP"
-          mkdir -p "$RUNNER_TEMP/ipa/Payload" "$GITHUB_WORKSPACE/output"
-          cp -R "$APP" "$RUNNER_TEMP/ipa/Payload/"
+          echo "DEVICE_APP=$DEVICE_APP" >> "$GITHUB_ENV"
+          echo "SIM_APP=$SIM_APP" >> "$GITHUB_ENV"
+          du -sh "$DEVICE_APP" "$SIM_APP"
+
+      - name: Package unsigned IPA
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/ipa/Payload" output
+          cp -R "$DEVICE_APP" "$RUNNER_TEMP/ipa/Payload/"
           (cd "$RUNNER_TEMP/ipa" && zip -qry "$GITHUB_WORKSPACE/output/Novalist-iPadOS18-unsigned.ipa" Payload)
-          ls -lh "$GITHUB_WORKSPACE/output/Novalist-iPadOS18-unsigned.ipa"
-      - uses: actions/upload-artifact@v4
+          cp -R "$SIM_APP" "$RUNNER_TEMP/Novalist.Mobile.sim.app"
+          (cd "$RUNNER_TEMP" && zip -qry "$GITHUB_WORKSPACE/output/Novalist-simulator-arm64.app.zip" Novalist.Mobile.sim.app)
+          ls -lh output/
+
+      # ---------------------------------------------------------------------
+      # Static verification of the DEVICE build (evidence for iPadOS 18.5 +
+      # ARM64 compatibility). Fails the run on any mismatch.
+      # ---------------------------------------------------------------------
+      - name: Verify IPA (structure, MinimumOSVersion, arm64)
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/ipa-check"
+          unzip -q -o output/Novalist-iPadOS18-unsigned.ipa -d "$RUNNER_TEMP/ipa-check"
+          python3 - "$RUNNER_TEMP/ipa-check" "$GITHUB_WORKSPACE/output/verification-report.json" <<'PYEOF'
+          import plistlib, json, os, subprocess, sys
+
+          root = sys.argv[1]
+          report_path = sys.argv[2]
+          app_dir = os.path.join(root, "Payload")
+          entries = os.listdir(app_dir)
+          assert len(entries) == 1 and entries[0].endswith(".app"), f"Payload must contain exactly one .app: {entries}"
+          app = os.path.join(app_dir, entries[0])
+
+          with open(os.path.join(app, "Info.plist"), "rb") as f:
+            plist = plistlib.load(f)
+
+          def sh(cmd):
+            return subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout.strip()
+
+          exe = os.path.join(app, plist["CFBundleExecutable"])
+          lipo = sh(f"lipo -archs '{exe}'")
+          vtool = sh(f"vtool -show-build '{exe}'")
+
+          import re
+          platform_line = next((l for l in vtool.splitlines() if " platform " in l), "")
+          minos_line = next((l for l in vtool.splitlines() if " minos " in l), "")
+
+          checks = {}
+          checks["payload_structure"] = os.path.isdir(app)
+          checks["minimum_os_version"] = float(plist["MinimumOSVersion"])
+          checks["minimum_os_le_18_5"] = float(plist["MinimumOSVersion"]) <= 18.5
+          checks["bundle_id"] = plist["CFBundleIdentifier"]
+          checks["device_capabilities_arm64"] = "arm64" in (plist.get("UIRequiredDeviceCapabilities") or [])
+          checks["uidevice_family_includes_ipad"] = 2 in (plist.get("UIDeviceFamily") or [])
+          checks["executable_archs"] = lipo
+          checks["executable_is_arm64_only"] = lipo.split() == ["arm64"]
+          checks["macho_platform_is_ios_device"] = "IOS" in platform_line and "IOSSIMULATOR" not in platform_line
+          checks["macho_minos"] = minos_line.strip()
+          checks["supported_platform_iphoneos"] = plist.get("CFBundleSupportedPlatforms") == ["iPhoneOS"]
+          checks["no_provisioning_profile"] = not os.path.exists(os.path.join(app, "embedded.mobileprovision"))
+          checks["web_entry_present"] = os.path.exists(os.path.join(app, "app", "index.mobile.html"))
+          checks["hybrid_bridge_present"] = os.path.exists(os.path.join(app, "_framework", "hybridwebview.js"))
+          checks["editor_assets_present"] = os.path.isdir(os.path.join(app, "app", "editor"))
+          checks["skia_framework_arm64"] = "arm64" in sh(
+            f"lipo -archs '{app}/Frameworks/libSkiaSharp.framework/libSkiaSharp'")
+
+          # uncompressed footprint + biggest offenders
+          total = 0
+          files = []
+          for dirpath, _, filenames in os.walk(app):
+            for name in filenames:
+              p = os.path.join(dirpath, name)
+              try: size = os.path.getsize(p)
+              except OSError: continue
+              total += size
+              files.append((size, os.path.relpath(p, app)))
+          files.sort(reverse=True)
+          checks["uncompressed_app_bytes"] = total
+          checks["top_files"] = [
+            {"path": rel, "bytes": size} for size, rel in files[:15]
+          ]
+          ipa_bytes = os.path.getsize(sys.argv[2].replace("/verification-report.json", "/Novalist-iPadOS18-unsigned.ipa"))
+          checks["ipa_zip_bytes"] = ipa_bytes
+
+          failures = [k for k, v in checks.items() if v is False]
+          report = {"checks": checks, "failures": failures}
+          with open(report_path, "w") as f:
+            json.dump(report, f, indent=2, default=str)
+          print(json.dumps(report, indent=2, default=str))
+          if failures:
+            print("::error::IPA verification failures: " + ", ".join(failures))
+            sys.exit(1)
+          PYEOF
+
+      - name: Size report
+        run: |
+          {
+            echo "## IPA size report"
+            echo ""
+            echo "| Artifact | Size |"
+            echo "| --- | --- |"
+            echo "| IPA (zip) | $(du -h output/Novalist-iPadOS18-unsigned.ipa | cut -f1) |"
+            echo "| App bundle (uncompressed) | $(du -sh "$DEVICE_APP" | cut -f1) |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "### Biggest components (uncompressed)" >> "$GITHUB_STEP_SUMMARY"
+          python3 - "$DEVICE_APP" <<'PYEOF' >> "$GITHUB_STEP_SUMMARY"
+          import os, sys
+          app = sys.argv[1]
+          files = []
+          for dirpath, _, filenames in os.walk(app):
+            for n in filenames:
+              p = os.path.join(dirpath, n)
+              try: files.append((os.path.getsize(p), os.path.relpath(p, app)))
+              except OSError: pass
+          files.sort(reverse=True)
+          print("| File | Size |")
+          print("| --- | --- |")
+          for size, rel in files[:12]:
+            print(f"| {rel} | {size/1048576:.2f} MB |")
+          PYEOF
+
+      - name: Upload IPA + verification artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: Novalist-iPadOS18-unsigned-ipa
-          path: output/*.ipa
+          path: |
+            output/*.ipa
+            output/verification-report.json
           if-no-files-found: error
+
+      - name: Upload simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Novalist-simulator-app
+          path: output/Novalist-simulator-arm64.app.zip
+          if-no-files-found: error
+
+  # --------------------------------------------------------------------------
+  # Job 2: install the simulator build on an iPad simulator and run the hosted
+  # XCTest smoke suite (boot, novel creation, Arabic content, restart
+  # persistence, codex, export). Produces screenshots, logs and an xcresult.
+  # --------------------------------------------------------------------------
+  simulator-tests:
+    name: iPad simulator smoke tests
+    runs-on: macos-15
+    needs: build
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download simulator app
+        uses: actions/download-artifact@v4
+        with:
+          name: Novalist-simulator-app
+          path: sim-download
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Diagnostics
+        run: |
+          sudo xcode-select -s "$XCODE_PATH"
+          xcodebuild -version
+          xcrun simctl runtime list || true
+          xcrun simctl list devicetypes | grep -i ipad | head -20
+
+      # Prefer iPadOS 18.5 exactly (the user's device OS). If the runtime is
+      # not installed and cannot be downloaded from Apple, fall back to the
+      # closest available iOS 18.x runtime and document the difference.
+      - name: Select or install simulator runtime
+        id: runtime
+        timeout-minutes: 35
+        run: |
+          set -euo pipefail
+          pick_runtime() {
+            xcrun simctl runtime list 2>/dev/null | grep -E '^iOS ' | sed -E 's/^iOS ([0-9.]+).*/\1/' | sort -t. -k1,1n -k2,2n -k3,3n
+          }
+          echo "Available iOS runtimes before attempt:"
+          pick_runtime || true
+
+          if xcrun simctl runtime list 2>/dev/null | grep -q '^iOS 18.5'; then
+            echo "RUNTIME_VERSION=18.5" >> "$GITHUB_ENV"
+            echo "RUNTIME_SOURCE=preinstalled" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          echo "iOS 18.5 runtime not preinstalled - downloading from Apple (official channel)..."
+          if timeout 1500 xcodebuild -downloadPlatform iOS -buildVersion 18.5; then
+            echo "RUNTIME_VERSION=18.5" >> "$GITHUB_ENV"
+            echo "RUNTIME_SOURCE=downloaded-xcodebuild" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          echo "::warning::iOS 18.5 runtime download failed - falling back to closest installed iOS 18.x"
+
+          CLOSEST=$(pick_runtime | grep '^18\.' | tail -1 || true)
+          if [[ -n "$CLOSEST" ]]; then
+            echo "RUNTIME_VERSION=$CLOSEST" >> "$GITHUB_ENV"
+            echo "RUNTIME_SOURCE=fallback-closest-18x" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          NEWEST=$(pick_runtime | tail -1)
+          if [[ -z "$NEWEST" ]]; then
+            echo "::error::No iOS simulator runtime is installed and iOS 18.5 could not be downloaded"
+            xcrun simctl runtime list || true
+            exit 1
+          fi
+          echo "::warning::No iOS 18.x runtime available at all - using newest runtime $NEWEST"
+          echo "RUNTIME_VERSION=$NEWEST" >> "$GITHUB_ENV"
+          echo "RUNTIME_SOURCE=fallback-newest" >> "$GITHUB_ENV"
+
+      - name: Create and boot iPad simulator
+        run: |
+          set -euo pipefail
+          RUNTIME_ID=$(xcrun simctl list runtimes | grep "iOS ${RUNTIME_VERSION}" | grep -oE 'com\.apple\.CoreSimulator\.SimRuntime\.iOS-[0-9-]+' | head -1)
+          if [[ -z "$RUNTIME_ID" ]]; then
+            echo "::error::Runtime $RUNTIME_VERSION not found in simctl list runtimes"
+            xcrun simctl list runtimes
+            exit 1
+          fi
+          echo "Runtime id: $RUNTIME_ID"
+          DEVTYPE=""
+          for candidate in "iPad (7th generation)" "iPad (9th generation)" "iPad (10th generation)" "iPad Pro (11-inch) (4th generation)" "iPad Pro (11-inch)"; do
+            if xcrun simctl list devicetypes | grep -qF "$candidate"; then DEVTYPE="$candidate"; break; fi
+          done
+          if [[ -z "$DEVTYPE" ]]; then
+            echo "::error::No iPad device type found"; xcrun simctl list devicetypes | grep -i ipad; exit 1
+          fi
+          echo "Using device type: $DEVTYPE (runtime $RUNTIME_ID, source: $RUNTIME_SOURCE)"
+          UDID=$(xcrun simctl create "NovalistSmoke-iPad" "$DEVTYPE" "$RUNTIME_ID")
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+
+      - name: Install and first-launch the app
+        run: |
+          set -euo pipefail
+          mkdir -p evidence screenshots
+          unzip -q -o sim-download/Novalist-simulator-arm64.app.zip -d sim-unpacked
+          APP_DIR=$(find sim-unpacked -type d -name '*.app' -print -quit)
+          echo "Installing: $APP_DIR"
+          xcrun simctl install "$SIM_UDID" "$APP_DIR"
+          xcrun simctl launch "$SIM_UDID" "$APP_ID" | tee evidence/first-launch.txt
+          sleep 25
+          xcrun simctl io "$SIM_UDID" screenshot screenshots/01-first-launch-25s.png
+          pgrep -fl "Novalist.Mobile.app" | tee evidence/processes-25s.txt || true
+          if ! pgrep -f "Novalist.Mobile.app" >/dev/null; then
+            echo "::error::App process is not running 25s after first launch"
+            xcrun simctl spawn "$SIM_UDID" log show --last 2m > evidence/crash-window.log || true
+            exit 1
+          fi
+          # Cold restart: terminate and relaunch.
+          xcrun simctl terminate "$SIM_UDID" "$APP_ID" || true
+          sleep 3
+          xcrun simctl launch "$SIM_UDID" "$APP_ID" | tee evidence/second-launch.txt
+          sleep 15
+          xcrun simctl io "$SIM_UDID" screenshot screenshots/02-second-launch-15s.png
+          if ! pgrep -f "Novalist.Mobile.app" >/dev/null; then
+            echo "::error::App process did not survive a cold restart"
+            exit 1
+          fi
+          echo "App survived first launch and cold restart."
+          xcrun simctl terminate "$SIM_UDID" "$APP_ID" || true
+
+      # ---------------------------------------------------------------------
+      # Phase 1: hosted XCTest run inside the app - boot assertions, create
+      # novel, chapters, Arabic scene, codex entity, Markdown export.
+      # ---------------------------------------------------------------------
+      - name: Stage host app and run Phase 1 tests
+        run: |
+          set -euo pipefail
+          mkdir -p tests/iOS.Smoke/host
+          cp -R sim-unpacked/Novalist.Mobile.sim.app tests/iOS.Smoke/host/Novalist.Mobile.app
+          set +e
+          xcodebuild test \
+            -project tests/iOS.Smoke/SmokeTests.xcodeproj \
+            -scheme SmokeTests \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIM_UDID" \
+            -derivedDataPath "$RUNNER_TEMP/smoke-dd" \
+            -resultBundlePath "$RUNNER_TEMP/smoke-phase1.xcresult" \
+            -parallel-testing-enabled NO \
+            -only-testing:SmokeTests/SmokeTests/test01_Boots_WithRendererAndRpc \
+            -only-testing:SmokeTests/SmokeTests/test02_CreateNovelProject \
+            -only-testing:SmokeTests/SmokeTests/test03_CreateChapterAndScene \
+            -only-testing:SmokeTests/SmokeTests/test04_WriteArabicAndVerifyPersistence \
+            -only-testing:SmokeTests/SmokeTests/test05_CodexCharacterLifecycle \
+            -only-testing:SmokeTests/SmokeTests/test06_ExportRunsAndProducesArabicFile \
+            2>&1 | tee evidence/phase1-xcodebuild.log
+          STATUS=${PIPESTATUS[0]}
+          set -e
+          echo "PHASE1_STATUS=$STATUS" >> "$GITHUB_ENV"
+          grep -E "Test Suite|Test Case.*(passed|failed)" evidence/phase1-xcodebuild.log | tail -40 || true
+          xcrun simctl io "$SIM_UDID" screenshot screenshots/03-after-phase1.png || true
+          if [[ "$STATUS" != "0" ]]; then
+            echo "::warning::Phase 1 xcodebuild exited non-zero ($STATUS) - logs preserved in evidence/"
+          fi
+
+      - name: Memory + logs snapshot
+        run: |
+          set -euo pipefail
+          ps -axo rss,comm | grep -i "Novalist.Mobile" | tee evidence/memory-rss.txt || true
+          xcrun simctl spawn "$SIM_UDID" log show --last 20m \
+            --predicate 'processImagePath CONTAINS "Novalist"' \
+            > evidence/simulator-app-logs.log 2>&1 || true
+          tail -80 evidence/simulator-app-logs.log || true
+          ls "$HOME/Library/Logs/DiagnosticReports" 2>/dev/null | grep -i novalist | tee evidence/crash-reports.txt || true
+
+      # ---------------------------------------------------------------------
+      # Phase 2: cold restart, reopen the project, verify Arabic persistence.
+      # ---------------------------------------------------------------------
+      - name: Run Phase 2 test (restart persistence)
+        run: |
+          set -euo pipefail
+          xcrun simctl terminate "$SIM_UDID" "$APP_ID" || true
+          sleep 3
+          set +e
+          xcodebuild test \
+            -project tests/iOS.Smoke/SmokeTests.xcodeproj \
+            -scheme SmokeTests \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIM_UDID" \
+            -derivedDataPath "$RUNNER_TEMP/smoke-dd" \
+            -resultBundlePath "$RUNNER_TEMP/smoke-phase2.xcresult" \
+            -parallel-testing-enabled NO \
+            -only-testing:SmokeTests/SmokeTests/test90_AfterRestart_ProjectReopensAndArabicTextSurvives \
+            2>&1 | tee evidence/phase2-xcodebuild.log
+          STATUS=${PIPESTATUS[0]}
+          set -e
+          echo "PHASE2_STATUS=$STATUS" >> "$GITHUB_ENV"
+          grep -E "Test Suite|Test Case.*(passed|failed)" evidence/phase2-xcodebuild.log | tail -20 || true
+          xcrun simctl io "$SIM_UDID" screenshot screenshots/04-after-reopen.png || true
+
+      - name: Publish test verdict
+        run: |
+          set -euo pipefail
+          {
+            echo "## iPad simulator smoke test results"
+            echo ""
+            echo "| Phase | Exit code |"
+            echo "| --- | --- |"
+            echo "| Phase 1 (boot/create/Arabic/codex/export) | $PHASE1_STATUS |"
+            echo "| Phase 2 (restart persistence) | $PHASE2_STATUS |"
+            echo ""
+            echo "Runtime used: iOS ${RUNTIME_VERSION} (${RUNTIME_SOURCE})"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${PHASE1_STATUS:-1}" != "0" || "${PHASE2_STATUS:-1}" != "0" ]]; then
+            echo "::error::Simulator smoke tests failed - see evidence artifacts"
+            tail -60 evidence/phase1-xcodebuild.log || true
+            tail -60 evidence/phase2-xcodebuild.log || true
+            exit 1
+          fi
+          echo "All simulator smoke tests passed."
+
+      - name: Upload simulator test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Novalist-simulator-test-evidence
+          path: |
+            screenshots/
+            evidence/
+          if-no-files-found: warning
+
+      - name: Upload xcresult bundles
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Novalist-smoke-xcresults
+          path: |
+            ${{ runner.temp }}/smoke-phase1.xcresult
+            ${{ runner.temp }}/smoke-phase2.xcresult
+          if-no-files-found: ignore
