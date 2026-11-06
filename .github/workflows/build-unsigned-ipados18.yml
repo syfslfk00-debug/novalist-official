@@ -86,8 +86,15 @@ jobs:
       - name: Locate .app bundles
         run: |
           set -euo pipefail
-          DEVICE_APP=$(find "$RUNNER_TEMP/novalist-publish-device" -type d -name '*.app' -print -quit)
-          SIM_APP=$(find Novalist.Mobile/bin "$RUNNER_TEMP/novalist-publish-sim" -type d -name '*.app' -print -quit 2>/dev/null || true)
+          # The publish output directory receives the loose assemblies; the .app
+          # bundle itself stays under bin/<tfw>/<rid>/ (same behaviour the old
+          # workflow's 69266d23 fix accounted for).
+          DEVICE_APP=$(find "$RUNNER_TEMP/novalist-publish-device" \
+            Novalist.Mobile/bin/Release/net10.0-ios/ios-arm64 \
+            -type d -name '*.app' -print -quit 2>/dev/null || true)
+          SIM_APP=$(find "$RUNNER_TEMP/novalist-publish-sim" \
+            Novalist.Mobile/bin/Release/net10.0-ios/iossimulator-arm64 \
+            -type d -name '*.app' -print -quit 2>/dev/null || true)
           if [[ -z "$DEVICE_APP" || -z "$SIM_APP" ]]; then
             echo "::error::Missing .app output"
             find "$RUNNER_TEMP/novalist-publish-device" Novalist.Mobile/bin -maxdepth 5 -type d -name '*.app' 2>/dev/null | head -20
