@@ -1,0 +1,53 @@
+name: Build unsigned iPadOS 18 IPA
+
+on:
+  push:
+    branches: [build/ipados18-unsigned-ipa]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ipa:
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Environment diagnostics
+        run: |
+          xcodebuild -version
+          dotnet --info
+      - name: Install MAUI iOS workload
+        run: dotnet workload install maui-ios
+      - name: Build mobile web assets
+        working-directory: app
+        run: |
+          npm ci
+          npm run build:mobile
+      - name: Publish unsigned iOS app
+        run: |
+          dotnet publish Novalist.Mobile/Novalist.Mobile.csproj -c Release -f net10.0-ios -r ios-arm64 -p:ArchiveOnBuild=false -p:BuildIpa=false -p:EnableCodeSigning=false -p:CodesignKey= -p:CodesignProvision= -p:RuntimeIdentifier=ios-arm64 -o "$RUNNER_TEMP/novalist-publish"
+      - name: Package unsigned IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(find "$RUNNER_TEMP/novalist-publish" -maxdepth 2 -name '*.app' -type d | head -n 1)
+          test -n "$APP"
+          mkdir -p "$RUNNER_TEMP/ipa/Payload" "$GITHUB_WORKSPACE/output"
+          cp -R "$APP" "$RUNNER_TEMP/ipa/Payload/"
+          (cd "$RUNNER_TEMP/ipa" && zip -qry "$GITHUB_WORKSPACE/output/Novalist-iPadOS18-unsigned.ipa" Payload)
+          ls -lh "$GITHUB_WORKSPACE/output/Novalist-iPadOS18-unsigned.ipa"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Novalist-iPadOS18-unsigned-ipa
+          path: output/*.ipa
+          if-no-files-found: error
