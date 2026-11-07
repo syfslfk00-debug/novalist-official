@@ -361,21 +361,28 @@ jobs:
       - name: Stage host app and run Phase 1 tests
         run: |
           set -euo pipefail
-          mkdir -p tests/iOS.Smoke/host
-          cp -R sim-unpacked/Novalist.Mobile.sim.app tests/iOS.Smoke/host/Novalist.Mobile.app
-          # Fail early with a clear diagnostic if XCTest's configured host is missing.
-          TEST_HOST_EXEC="Novalist.Mobile/bin/Release/net10.0-ios/iossimulator-arm64/Novalist.Mobile.app/Novalist.Mobile"
+          # Stage an exact .app directory, rather than relying on cp -R's
+          # destination-directory semantics (which can create a nested bundle).
+          HOST_APP="$GITHUB_WORKSPACE/tests/iOS.Smoke/host/Novalist.Mobile.app"
+          mkdir -p "$(dirname "$HOST_APP")"
+          rm -rf "$HOST_APP"
+          ditto "$GITHUB_WORKSPACE/sim-unpacked/Novalist.Mobile.sim.app" "$HOST_APP"
+          TEST_HOST_EXEC="$HOST_APP/Novalist.Mobile"
           if [[ ! -f "$TEST_HOST_EXEC" ]]; then
-            echo "::error::XCTest TEST_HOST executable missing: $TEST_HOST_EXEC"
-            find Novalist.Mobile/bin/Release -name Novalist.Mobile -type f -print || true
+            echo "::error::Staged XCTest host executable missing: $TEST_HOST_EXEC"
+            find "$HOST_APP" -maxdepth 3 -type f | head -40 || true
             exit 1
           fi
           ls -lh "$TEST_HOST_EXEC"
+          # Force the verified absolute host path for both xcodebuild invocations.
+          echo "TEST_HOST_EXEC=$TEST_HOST_EXEC" >> "$GITHUB_ENV"
           set +e
           xcodebuild test \
             -project tests/iOS.Smoke/SmokeTests.xcodeproj \
             -scheme SmokeTests \
             -configuration Debug \
+            "TEST_HOST=$TEST_HOST_EXEC" \
+            "BUNDLE_LOADER=$TEST_HOST_EXEC" \
             -destination "platform=iOS Simulator,id=$SIM_UDID" \
             -derivedDataPath "$RUNNER_TEMP/smoke-dd" \
             -resultBundlePath "$RUNNER_TEMP/smoke-phase1.xcresult" \
@@ -419,6 +426,8 @@ jobs:
             -project tests/iOS.Smoke/SmokeTests.xcodeproj \
             -scheme SmokeTests \
             -configuration Debug \
+            "TEST_HOST=$TEST_HOST_EXEC" \
+            "BUNDLE_LOADER=$TEST_HOST_EXEC" \
             -destination "platform=iOS Simulator,id=$SIM_UDID" \
             -derivedDataPath "$RUNNER_TEMP/smoke-dd" \
             -resultBundlePath "$RUNNER_TEMP/smoke-phase2.xcresult" \
