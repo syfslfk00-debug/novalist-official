@@ -367,7 +367,13 @@ jobs:
           mkdir -p "$(dirname "$HOST_APP")"
           rm -rf "$HOST_APP"
           ditto "$GITHUB_WORKSPACE/sim-unpacked/Novalist.Mobile.sim.app" "$HOST_APP"
-          TEST_HOST_EXEC="$HOST_APP/Novalist.Mobile"
+          # Xcode resolves hosted XCTest bundles from its build-products tree.
+          # Stage the prebuilt MAUI simulator app there as well, so TEST_HOST
+          # points to a build product rather than an unrelated source directory.
+          PRODUCTS_DIR="$RUNNER_TEMP/smoke-dd/Build/Products/Debug-iphonesimulator"
+          mkdir -p "$PRODUCTS_DIR"
+          ditto "$HOST_APP" "$PRODUCTS_DIR/Novalist.Mobile.app"
+          TEST_HOST_EXEC="$PRODUCTS_DIR/Novalist.Mobile.app/Novalist.Mobile"
           if [[ ! -f "$TEST_HOST_EXEC" ]]; then
             echo "::error::Staged XCTest host executable missing: $TEST_HOST_EXEC"
             find "$HOST_APP" -maxdepth 3 -type f | head -40 || true
