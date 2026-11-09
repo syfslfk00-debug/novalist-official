@@ -15,7 +15,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-                4A0000000000000000000001 /* SmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeTests.swift; sourceTree = "<group>"; };
+                4A0000000000000000000001 /* SmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeTests/SmokeTests.swift; sourceTree = "<group>"; };
                 4A0000000000000000000004 /* SmokeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmokeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
                 4A0000000000000000000006 /* SmokeTests */ = {isa = PBXFileReference; lastKnownFileType = text; path = SmokeTests; sourceTree = "<group>"; };
                 4A0000000000000000000021 /* Novalist.Mobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Novalist.Mobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
