@@ -9,8 +9,8 @@ source_dir="$(cd "$(dirname "$0")" && pwd)"
 mkdir -p "$(dirname "$output")"
 case "$platform" in
   macos) sdk=macosx; target="$arch-apple-macosx26.0"; kind=dynamic ;;
-  ios) sdk=iphoneos; target="$arch-apple-ios27.0"; kind=static ;;
-  simulator) sdk=iphonesimulator; target="$arch-apple-ios27.0-simulator"; kind=static ;;
+  ios) sdk=iphoneos; target="$arch-apple-ios18.0"; kind=static ;;
+  simulator) sdk=iphonesimulator; target="$arch-apple-ios18.0-simulator"; kind=static ;;
   *) echo "Unsupported speech build platform: $platform" >&2; exit 1 ;;
 esac
 args=(-sdk "$(xcrun --sdk "$sdk" --show-sdk-path)" -target "$target"
@@ -21,4 +21,10 @@ if [ "$kind" = static ]; then
 else
   args+=(-Xlinker -install_name -Xlinker @rpath/libNovalistSpeech.dylib)
 fi
-xcrun --sdk "$sdk" swiftc "${args[@]}" "$source_dir/NovalistSpeech.swift" "$source_dir/AppleMicrophone.swift" -o "$output"
+if [ "$platform" = macos ]; then
+  sources=("$source_dir/NovalistSpeech.swift" "$source_dir/AppleMicrophone.swift")
+else
+  # The full SpeechAnalyzer bridge requires iOS 26+ and crashes on iOS 18.5.
+  sources=("$source_dir/NovalistSpeech.iOS18.swift")
+fi
+xcrun --sdk "$sdk" swiftc "${args[@]}" "${sources[@]}" -o "$output"
