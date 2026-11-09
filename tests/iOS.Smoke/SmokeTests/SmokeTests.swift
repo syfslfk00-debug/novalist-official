@@ -94,7 +94,7 @@ final class SmokeTests: XCTestCase {
         for attempt in 0..<max(1, retries) {
             do {
                 let raw = try await withTimeout(seconds: timeout) {
-                    try await web.evaluateJavaScript(script)
+                    try await web.callAsyncJavaScript("return await (" + script + ");", arguments: [:], in: nil, contentWorld: .page)
                 }
                 if let s = raw as? String, !s.isEmpty { return s }
                 if raw != nil && !(raw is NSNull) { return String(describing: raw!) }
