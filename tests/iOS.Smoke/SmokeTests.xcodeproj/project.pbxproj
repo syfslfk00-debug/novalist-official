@@ -114,7 +114,7 @@
                         outputPaths = ();
                         runOnlyForDeploymentPostprocessing = 0;
                         shellPath = /bin/sh;
-                        shellScript = "set -eu\nSOURCE_APP=\"$SRCROOT/host/Novalist.Mobile.app\"\nDEST_APP=\"$TARGET_BUILD_DIR/$FULL_PRODUCT_NAME\"\nif [ ! -d \"$SOURCE_APP\" ]; then echo \"Missing prebuilt MAUI app: $SOURCE_APP\" >&2; exit 1; fi\nmkdir -p \"$TARGET_BUILD_DIR\"\nif [ \"$SOURCE_APP\" != \"$DEST_APP\" ]; then rm -rf \"$DEST_APP\"; ditto \"$SOURCE_APP\" \"$DEST_APP\"; fi\n";
+                        shellScript = "set -eu\nDEST_APP=\"$TARGET_BUILD_DIR/$FULL_PRODUCT_NAME\"\n# The workflow stages this bundle before xcodebuild starts. Do not delete or\n# overwrite it during the build: Xcode concurrently embeds XCTest frameworks.\nif [ ! -f \"$DEST_APP/Novalist.Mobile\" ]; then echo \"Missing staged MAUI host executable: $DEST_APP/Novalist.Mobile\" >&2; exit 1; fi\n";
                 };
 /* End PBXShellScriptBuildPhase section */
 
