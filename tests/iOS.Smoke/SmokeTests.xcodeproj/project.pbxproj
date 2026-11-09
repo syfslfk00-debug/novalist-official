@@ -134,8 +134,8 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-                4A0000000000000000000026 /* Debug host */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGNING_ALLOWED = NO; CODE_SIGNING_REQUIRED = NO; GENERATE_INFOPLIST_FILE = NO; IPHONEOS_DEPLOYMENT_TARGET = 18.0; PRODUCT_BUNDLE_IDENTIFIER = com.syfslfk00.novalist; PRODUCT_NAME = "Novalist.Mobile"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = iphonesimulator; TARGETED_DEVICE_FAMILY = "1,2"; SKIP_INSTALL = NO; }; name = Debug; };
-                4A0000000000000000000027 /* Release host */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGNING_ALLOWED = NO; CODE_SIGNING_REQUIRED = NO; GENERATE_INFOPLIST_FILE = NO; IPHONEOS_DEPLOYMENT_TARGET = 18.0; PRODUCT_BUNDLE_IDENTIFIER = com.syfslfk00.novalist; PRODUCT_NAME = "Novalist.Mobile"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = iphonesimulator; TARGETED_DEVICE_FAMILY = "1,2"; SKIP_INSTALL = NO; }; name = Release; };
+                4A0000000000000000000026 /* Debug host */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGNING_ALLOWED = NO; CODE_SIGNING_REQUIRED = NO; GENERATE_INFOPLIST_FILE = NO; ENABLE_DEBUG_DYLIB = NO; IPHONEOS_DEPLOYMENT_TARGET = 18.0; PRODUCT_BUNDLE_IDENTIFIER = com.syfslfk00.novalist; PRODUCT_NAME = "Novalist.Mobile"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = iphonesimulator; TARGETED_DEVICE_FAMILY = "1,2"; SKIP_INSTALL = NO; }; name = Debug; };
+                4A0000000000000000000027 /* Release host */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGNING_ALLOWED = NO; CODE_SIGNING_REQUIRED = NO; GENERATE_INFOPLIST_FILE = NO; ENABLE_DEBUG_DYLIB = NO; IPHONEOS_DEPLOYMENT_TARGET = 18.0; PRODUCT_BUNDLE_IDENTIFIER = com.syfslfk00.novalist; PRODUCT_NAME = "Novalist.Mobile"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = iphonesimulator; TARGETED_DEVICE_FAMILY = "1,2"; SKIP_INSTALL = NO; }; name = Release; };
                 4A000000000000000000000A /* Debug */ = {
                         isa = XCBuildConfiguration;
                         buildSettings = {
