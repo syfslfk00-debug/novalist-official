@@ -349,8 +349,8 @@ final class SmokeTests: XCTestCase {
         // The backend may resolve/rewrite the output path; scan tmp + Documents
         // for a Markdown file carrying the scene text.
         try await Task.sleep(nanoseconds: 1_500_000_000)
-        let exported = Self.firstFileContaining("Ibn Jubayr", under: tmp)
-            ?? Self.firstFileContaining("Ibn Jubayr", under: (try documentsDirectory()))
+        let exported = try Self.firstFileContaining("Ibn Jubayr", under: tmp)
+            ?? Self.firstFileContaining("Ibn Jubayr", under: documentsDirectory())
         XCTAssertNotNil(exported,
                         "No exported file containing the Arabic scene was found under tmp/Documents. export/run said: \(result.prefix(300))")
         if let path = exported {
