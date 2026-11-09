@@ -87,40 +87,58 @@ final class SmokeTests: XCTestCase {
     /// Evaluates `script` (must return a string) with retry until it resolves
     /// to non-empty output. Long-running JS promises are awaited inside the
     /// script itself; we only retry transport-level failures.
+    /// Run promise-producing JavaScript without Swift WebKit async overlays.
+    /// The callback-based API avoids libswiftWebKit.dylib on iOS 18.5.
     private func evaluateString(_ web: WKWebView, _ script: String,
                                 timeout: TimeInterval = 90, retries: Int = 3) async throws -> String {
         var lastError: Error = NSError(domain: "SmokeTests", code: 3,
-                                       userInfo: [NSLocalizedDescriptionKey: "evaluateString never ran."])
-        for attempt in 0..<max(1, retries) {
+                                       userInfo: [NSLocalizedDescriptionKey: "JS evaluation never ran"])
+        for _ in 0..<max(1, retries) {
             do {
-                let raw = try await withTimeout(seconds: timeout) {
-                    try await web.callAsyncJavaScript("return await (" + script + ");", arguments: [:], in: nil, contentWorld: .page)
+                let token = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+                let starter = """
+                window.__novalistSmoke = window.__novalistSmoke || {};
+                window.__novalistSmoke['\\(token)'] = {done:false};
+                Promise.resolve().then(() => (\\(script))).then(
+                  value => { window.__novalistSmoke['\\(token)'] = {done:true, value:String(value ?? '')}; },
+                  error => { window.__novalistSmoke['\\(token)'] = {done:true, error:String(error)}; }
+                );
+                'started';
+                """
+                _ = try await evaluateCallback(web, starter)
+                let deadline = Date().addingTimeInterval(timeout)
+                while Date() < deadline {
+                    let probe = "JSON.stringify(window.__novalistSmoke && window.__novalistSmoke['\\(token)'] || {done:false})"
+                    if let result = try await evaluateCallback(web, probe) as? String,
+                       result.contains("\\"done\\":true") {
+                        let data = Data(result.utf8)
+                        let state = (try JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
+                        if let error = state["error"] as? String {
+                            throw NSError(domain: "SmokeTests", code: 6,
+                                          userInfo: [NSLocalizedDescriptionKey: error])
+                        }
+                        if let value = state["value"] as? String, !value.isEmpty { return value }
+                        throw NSError(domain: "SmokeTests", code: 4,
+                                      userInfo: [NSLocalizedDescriptionKey: "JS returned empty"])
+                    }
+                    try await Task.sleep(nanoseconds: 250_000_000)
                 }
-                if let s = raw as? String, !s.isEmpty { return s }
-                if raw != nil && !(raw is NSNull) { return String(describing: raw!) }
-                lastError = NSError(domain: "SmokeTests", code: 4,
-                                    userInfo: [NSLocalizedDescriptionKey: "JS returned empty: \(String(describing: raw))"])
+                throw NSError(domain: "SmokeTests", code: 5,
+                              userInfo: [NSLocalizedDescriptionKey: "JS timed out after \\(timeout)s"])
             } catch {
                 lastError = error
-                // Renderer may still be booting; give it a beat and retry.
                 try await Task.sleep(nanoseconds: 1_500_000_000)
             }
         }
         throw lastError
     }
 
-    private func withTimeout<T: Sendable>(seconds: TimeInterval,
-                                          _ op: @escaping @Sendable () async throws -> T) async throws -> T {
-        try await withThrowingTaskGroup(of: T.self) { group in
-            group.addTask { try await op() }
-            group.addTask {
-                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-                throw NSError(domain: "SmokeTests", code: 5,
-                              userInfo: [NSLocalizedDescriptionKey: "JS evaluation timed out after \(seconds)s"])
+    private func evaluateCallback(_ web: WKWebView, _ javascript: String) async throws -> Any? {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Any?, Error>) in
+            web.evaluateJavaScript(javascript) { value, error in
+                if let error = error { continuation.resume(throwing: error) }
+                else { continuation.resume(returning: value) }
             }
-            let first = try await group.next()!
-            group.cancelAll()
-            return first
         }
     }
 
