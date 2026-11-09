@@ -10,10 +10,15 @@
                 4A0000000000000000000002 /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0000000000000000000001 /* SmokeTests.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+                4A0000000000000000000024 /* Host app proxy */ = {isa = PBXContainerItemProxy; containerPortal = 4A0000000000000000000010; proxyType = 1; remoteGlobalIDString = 4A0000000000000000000020; remoteInfo = "Novalist.Mobile"; };
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
                 4A0000000000000000000001 /* SmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeTests.swift; sourceTree = "<group>"; };
                 4A0000000000000000000004 /* SmokeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmokeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
                 4A0000000000000000000006 /* SmokeTests */ = {isa = PBXFileReference; lastKnownFileType = text; path = SmokeTests; sourceTree = "<group>"; };
+                4A0000000000000000000021 /* Novalist.Mobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Novalist.Mobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -31,6 +36,7 @@
                         isa = PBXGroup;
                         children = (
                                 4A0000000000000000000004 /* SmokeTests.xctest */,
+                                4A0000000000000000000021 /* Novalist.Mobile.app */,
                         );
                         name = Products;
                         sourceTree = "<group>";
@@ -38,6 +44,17 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+                4A0000000000000000000020 /* Novalist.Mobile */ = {
+                        isa = PBXNativeTarget;
+                        buildConfigurationList = 4A0000000000000000000025;
+                        buildPhases = (4A0000000000000000000022 /* Copy prebuilt MAUI app */,);
+                        buildRules = ();
+                        dependencies = ();
+                        name = "Novalist.Mobile";
+                        productName = "Novalist.Mobile";
+                        productReference = 4A0000000000000000000021;
+                        productType = "com.apple.product-type.application";
+                };
                 4A0000000000000000000009 /* SmokeTests */ = {
                         isa = PBXNativeTarget;
                         buildConfigurationList = 4A000000000000000000000F /* Build configuration list for PBXNativeTarget "SmokeTests" */;
@@ -47,6 +64,7 @@
                         buildRules = (
                         );
                         dependencies = (
+                                4A0000000000000000000023 /* Novalist.Mobile */,
                         );
                         name = SmokeTests;
                         productName = SmokeTests;
@@ -81,10 +99,28 @@
                         projectDirPath = "";
                         projectRoot = "";
                         targets = (
+                                4A0000000000000000000020 /* Novalist.Mobile */,
                                 4A0000000000000000000009 /* SmokeTests */,
                         );
                 };
 /* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+                4A0000000000000000000022 /* Copy prebuilt MAUI app */ = {
+                        isa = PBXShellScriptBuildPhase;
+                        buildActionMask = 2147483647;
+                        files = ();
+                        inputPaths = ();
+                        outputPaths = ();
+                        runOnlyForDeploymentPostprocessing = 0;
+                        shellPath = /bin/sh;
+                        shellScript = "set -eu\nSOURCE_APP=\"$SRCROOT/host/Novalist.Mobile.app\"\nDEST_APP=\"$TARGET_BUILD_DIR/$FULL_PRODUCT_NAME\"\nif [ ! -d \"$SOURCE_APP\" ]; then echo \"Missing prebuilt MAUI app: $SOURCE_APP\" >&2; exit 1; fi\nmkdir -p \"$TARGET_BUILD_DIR\"\nif [ \"$SOURCE_APP\" != \"$DEST_APP\" ]; then rm -rf \"$DEST_APP\"; ditto \"$SOURCE_APP\" \"$DEST_APP\"; fi\n";
+                };
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+                4A0000000000000000000023 /* Novalist.Mobile */ = {isa = PBXTargetDependency; target = 4A0000000000000000000020; targetProxy = 4A0000000000000000000024; };
+/* End PBXTargetDependency section */
 
 /* Begin PBXSourcesBuildPhase section */
                 4A0000000000000000000007 /* Sources */ = {
@@ -98,6 +134,8 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+                4A0000000000000000000026 /* Debug host */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGNING_ALLOWED = NO; CODE_SIGNING_REQUIRED = NO; GENERATE_INFOPLIST_FILE = NO; IPHONEOS_DEPLOYMENT_TARGET = 18.0; PRODUCT_BUNDLE_IDENTIFIER = com.syfslfk00.novalist; PRODUCT_NAME = "Novalist.Mobile"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = iphonesimulator; TARGETED_DEVICE_FAMILY = "1,2"; SKIP_INSTALL = NO; }; name = Debug; };
+                4A0000000000000000000027 /* Release host */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGNING_ALLOWED = NO; CODE_SIGNING_REQUIRED = NO; GENERATE_INFOPLIST_FILE = NO; IPHONEOS_DEPLOYMENT_TARGET = 18.0; PRODUCT_BUNDLE_IDENTIFIER = com.syfslfk00.novalist; PRODUCT_NAME = "Novalist.Mobile"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = iphonesimulator; TARGETED_DEVICE_FAMILY = "1,2"; SKIP_INSTALL = NO; }; name = Release; };
                 4A000000000000000000000A /* Debug */ = {
                         isa = XCBuildConfiguration;
                         buildSettings = {
@@ -171,7 +209,7 @@
                                 "SUPPORTED_PLATFORMS[sdk=iphonesimulator*]" = "iphonesimulator";
                                 SWIFT_EMIT_LOC_STRINGS = NO;
                                 TARGETED_DEVICE_FAMILY = "1,2";
-                                TEST_HOST = "$(SRCROOT)/host/Novalist.Mobile.app/Novalist.Mobile";
+                                TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Novalist.Mobile.app/Novalist.Mobile";
                                 WARNING_CFLAGS = "-w";
                         };
                         name = Debug;
@@ -212,6 +250,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+                4A0000000000000000000025 /* Host configurations */ = {isa = XCConfigurationList; buildConfigurations = (4A0000000000000000000026, 4A0000000000000000000027,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Debug; };
                 4A000000000000000000000E /* Build configuration list for PBXProject "SmokeTests" */ = {
                         isa = XCConfigurationList;
                         buildConfigurations = (
