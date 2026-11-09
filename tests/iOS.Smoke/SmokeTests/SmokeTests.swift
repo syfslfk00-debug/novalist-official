@@ -98,19 +98,19 @@ final class SmokeTests: XCTestCase {
                 let token = UUID().uuidString.replacingOccurrences(of: "-", with: "")
                 let starter = """
                 window.__novalistSmoke = window.__novalistSmoke || {};
-                window.__novalistSmoke['\\(token)'] = {done:false};
-                Promise.resolve().then(() => (\\(script))).then(
-                  value => { window.__novalistSmoke['\\(token)'] = {done:true, value:String(value ?? '')}; },
-                  error => { window.__novalistSmoke['\\(token)'] = {done:true, error:String(error)}; }
+                window.__novalistSmoke['\(token)'] = {done:false};
+                Promise.resolve().then(() => (\(script))).then(
+                  value => { window.__novalistSmoke['\(token)'] = {done:true, value:String(value ?? '')}; },
+                  error => { window.__novalistSmoke['\(token)'] = {done:true, error:String(error)}; }
                 );
                 'started';
                 """
                 _ = try await evaluateCallback(web, starter)
                 let deadline = Date().addingTimeInterval(timeout)
                 while Date() < deadline {
-                    let probe = "JSON.stringify(window.__novalistSmoke && window.__novalistSmoke['\\(token)'] || {done:false})"
+                    let probe = "JSON.stringify(window.__novalistSmoke && window.__novalistSmoke['\(token)'] || {done:false})"
                     if let result = try await evaluateCallback(web, probe) as? String,
-                       result.contains("\\"done\\":true") {
+                       result.contains("\"done\":true") {
                         let data = Data(result.utf8)
                         let state = (try JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
                         if let error = state["error"] as? String {
@@ -124,7 +124,7 @@ final class SmokeTests: XCTestCase {
                     try await Task.sleep(nanoseconds: 250_000_000)
                 }
                 throw NSError(domain: "SmokeTests", code: 5,
-                              userInfo: [NSLocalizedDescriptionKey: "JS timed out after \\(timeout)s"])
+                              userInfo: [NSLocalizedDescriptionKey: "JS timed out after \(timeout)s"])
             } catch {
                 lastError = error
                 try await Task.sleep(nanoseconds: 1_500_000_000)
