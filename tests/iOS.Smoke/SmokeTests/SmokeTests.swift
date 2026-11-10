@@ -314,7 +314,7 @@ final class SmokeTests: XCTestCase {
             try await evaluateString(web, jsRpc("scenes/write", writePayload)),
             "scenes/write")
         logStep("scenes/write -> \(written.prefix(200))")
-        XCTAssertTrue(written.contains("\\"conflicted\\":false"), "Scene write did not explicitly confirm a conflict-free save: \(written)")
+        XCTAssertTrue(written.contains(#""conflicted":false"#), "Scene write did not explicitly confirm a conflict-free save: \(written)")
 
         let reread = try assertNoJsError(
             try await evaluateString(web, jsRpc("manuscript/get", "['All', null, null, null, null, null]")),
