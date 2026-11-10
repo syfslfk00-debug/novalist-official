@@ -41,6 +41,7 @@ final class SmokeTests: XCTestCase {
 
     /// The HybridWebView's platform view. MAUI wraps handlers, so search the
     /// whole key-window hierarchy for the actual WKWebView.
+    @MainActor
     private func findWebView(in view: UIView) -> WKWebView? {
         if let web = view as? WKWebView { return web }
         for sub in view.subviews {
@@ -49,6 +50,7 @@ final class SmokeTests: XCTestCase {
         return nil
     }
 
+    @MainActor
     private func keyWindowRootView() throws -> UIView {
         let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
         let window = scenes.flatMap { $0.windows }.first { $0.isKeyWindow } ?? scenes.flatMap { $0.windows }.first
@@ -59,6 +61,7 @@ final class SmokeTests: XCTestCase {
         return root
     }
 
+    @MainActor
     private func waitUpTo(_ seconds: TimeInterval, _ poll: () -> Bool) -> Bool {
         let deadline = Date().addingTimeInterval(seconds)
         while Date() < deadline {
@@ -68,6 +71,7 @@ final class SmokeTests: XCTestCase {
         return poll()
     }
 
+    @MainActor
     private func acquiredWebView(_ seconds: TimeInterval = 30) throws -> WKWebView {
         var found: WKWebView?
         waitUpTo(seconds) { [weak self] in
@@ -89,6 +93,7 @@ final class SmokeTests: XCTestCase {
     /// script itself; we only retry transport-level failures.
     /// Run promise-producing JavaScript without Swift WebKit async overlays.
     /// The callback-based API avoids libswiftWebKit.dylib on iOS 18.5.
+    @MainActor
     private func evaluateString(_ web: WKWebView, _ script: String,
                                 timeout: TimeInterval = 90, retries: Int = 3) async throws -> String {
         var lastError: Error = NSError(domain: "SmokeTests", code: 3,
@@ -133,6 +138,7 @@ final class SmokeTests: XCTestCase {
         throw lastError
     }
 
+    @MainActor
     private func evaluateCallback(_ web: WKWebView, _ javascript: String) async throws -> Any? {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Any?, Error>) in
             web.evaluateJavaScript(javascript) { value, error in
@@ -201,6 +207,7 @@ final class SmokeTests: XCTestCase {
 
     /// The golden-path boot assertion: window exists, HybridWebView is mounted,
     /// the React renderer rendered real content, and the RPC bridge answers.
+    @MainActor
     func test01_Boots_WithRendererAndRpc() async throws {
         let web = try acquiredWebView(60)
         logStep("WKWebView acquired: \(web.bounds)")
@@ -245,6 +252,7 @@ final class SmokeTests: XCTestCase {
 
     /// Creates the smoke novel in the app's own Documents folder through the
     /// exact RPC the CreateProjectDialog uses.
+    @MainActor
     func test02_CreateNovelProject() async throws {
         let web = try acquiredWebView(60)
         let docs = try documentsDirectory()
@@ -262,6 +270,7 @@ final class SmokeTests: XCTestCase {
     }
 
     /// Chapter + scene structure through the binder's own calls.
+    @MainActor
     func test03_CreateChapterAndScene() async throws {
         let web = try acquiredWebView(60)
         let chapter = try assertNoJsError(
@@ -281,6 +290,7 @@ final class SmokeTests: XCTestCase {
     /// Writes the Arabic scene through `scenes/write` (the editor's own save
     /// path), reads it back via `manuscript/get`, and verifies the bytes hit the
     /// app sandbox on disk.
+    @MainActor
     func test04_WriteArabicAndVerifyPersistence() async throws {
         let web = try acquiredWebView(60)
 
@@ -321,6 +331,7 @@ final class SmokeTests: XCTestCase {
     }
 
     /// Codex: create a character entity, read it back, update it.
+    @MainActor
     func test05_CodexCharacterLifecycle() async throws {
         let web = try acquiredWebView(60)
         let created = try assertNoJsError(
@@ -341,6 +352,7 @@ final class SmokeTests: XCTestCase {
 
     /// Export pipeline: preview stats, then run a real Markdown export into the
     /// app's tmp directory and verify the file contains the Arabic scene.
+    @MainActor
     func test06_ExportRunsAndProducesArabicFile() async throws {
         let web = try acquiredWebView(60)
 
@@ -382,8 +394,23 @@ final class SmokeTests: XCTestCase {
 
     /// Runs in a SECOND `xcodebuild test` invocation after a cold terminate.
     /// The project must reopen from disk and the Arabic scene must be intact.
+    @MainActor
     func test90_AfterRestart_ProjectReopensAndArabicTextSurvives() async throws {
         let web = try acquiredWebView(60)
+
+        // A newly launched renderer may mount its WebView before the RPC bridge is registered.
+        // Wait for the actual bridge rather than treating startup latency as lost persistence.
+        let ready = try await evaluateString(web, """
+        (async () => {
+          for (let i = 0; i < 120; i++) {
+            if (window.novalistRpc && typeof window.novalistRpc.request === 'function') return 'ready';
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+          return 'not-ready';
+        })()
+        """, timeout: 90)
+        XCTAssertEqual(ready, "ready", "RPC bridge never initialized after restart")
+        guard ready == "ready" else { return }
 
         let recent = try assertNoJsError(
             try await evaluateString(web, jsRpc("project/recent", "[]"), timeout: 120),
