@@ -265,6 +265,23 @@ final class SmokeTests: XCTestCase {
         let state = try assertNoJsError(created, "project/create")
         XCTAssertTrue(state.contains(Self.novelName), "Created project state lacks the project name: \(state.prefix(300))")
 
+        // The real renderer calls setProjectRoot after project/create. This
+        // records the app-owned folder's relative path and project identity so
+        // a subsequent iOS container UUID change can resolve recent projects.
+        // Direct RPC smoke tests must exercise that host-side registration too.
+        let projectRoot = (parent as NSString).appendingPathComponent(Self.novelName)
+        let registration = try await evaluateString(web, """
+        (async () => {
+          if (!window.novalist?.setProjectRoot) return 'missing-host-api';
+          window.novalist.setProjectRoot(\(Self.jsEscape(projectRoot)));
+          return 'requested';
+        })()
+        """)
+        XCTAssertEqual(registration, "requested", "Could not register app-owned project root")
+        // setProjectRoot uses a fire-and-forget host call; allow its atomic
+        // registry write to complete before the second xcodebuild invocation.
+        try await Task.sleep(nanoseconds: 1_500_000_000)
+
         let recent = try await evaluateString(web, jsRpc("project/recent", "[]"))
         logStep("project/recent -> \(recent.prefix(400))")
     }
