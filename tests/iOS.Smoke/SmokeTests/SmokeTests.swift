@@ -295,7 +295,7 @@ final class SmokeTests: XCTestCase {
         let web = try acquiredWebView(60)
 
         let manuscript = try assertNoJsError(
-            try await evaluateString(web, jsRpc("manuscript/get", "['All', false, null, null, null, null]")),
+            try await evaluateString(web, jsRpc("manuscript/get", "['All', null, null, null, null, null]")),
             "manuscript/get")
         guard let sceneId = Self.extractFirstJsonStringField(manuscript, field: "sceneId"),
               let chapterGuid = Self.extractFirstJsonStringField(manuscript, field: "chapterGuid"),
@@ -317,7 +317,7 @@ final class SmokeTests: XCTestCase {
         XCTAssertFalse(written.contains("conflicted"), "Scene write reported a conflict: \(written)")
 
         let reread = try assertNoJsError(
-            try await evaluateString(web, jsRpc("manuscript/get", "['All', false, null, null, null, null]")),
+            try await evaluateString(web, jsRpc("manuscript/get", "['All', null, null, null, null, null]")),
             "manuscript/get (reread)")
         XCTAssertTrue(reread.contains("خالد الأنطاكي") || reread.contains("Ibn Jubayr"),
                       "Arabic content did not survive the write/read round-trip: \(reread.prefix(600))")
@@ -335,7 +335,7 @@ final class SmokeTests: XCTestCase {
     func test05_CodexCharacterLifecycle() async throws {
         let web = try acquiredWebView(60)
         let created = try assertNoJsError(
-            try await evaluateString(web, jsRpc("entities/create", "['characters', 'سليم المغامر', null]")),
+            try await evaluateString(web, jsRpc("entities/create", "['character', 'سليم المغامر', null]")),
             "entities/create")
         logStep("entities/create -> \(created.prefix(300))")
         guard let id = Self.extractFirstJsonStringField(created, field: "id") else {
@@ -343,7 +343,7 @@ final class SmokeTests: XCTestCase {
             return
         }
         let updated = try assertNoJsError(
-            try await evaluateString(web, jsRpc("entities/update", "['characters', \(Self.jsEscape(id)), {'name': 'سليم المغامر المُحدَّث'}]")),
+            try await evaluateString(web, jsRpc("entities/update", "['character', \(Self.jsEscape(id)), {'name': 'سليم المغامر المُحدَّث'}]")),
             "entities/update")
         logStep("entities/update -> \(updated.prefix(300))")
         XCTAssertTrue(updated.contains("سليم") || updated.contains("id"),
@@ -357,7 +357,7 @@ final class SmokeTests: XCTestCase {
         let web = try acquiredWebView(60)
 
         let manuscript = try assertNoJsError(
-            try await evaluateString(web, jsRpc("manuscript/get", "['All', false, null, null, null, null]")),
+            try await evaluateString(web, jsRpc("manuscript/get", "['All', null, null, null, null, null]")),
             "manuscript/get")
         guard let chapterGuid = Self.extractFirstJsonStringField(manuscript, field: "chapterGuid") else {
             XCTFail("No chapter guid for export: \(manuscript.prefix(300))")
@@ -432,7 +432,7 @@ final class SmokeTests: XCTestCase {
                       "Reopened project lacks the smoke chapter: \(opened.prefix(400))")
 
         let manuscript = try assertNoJsError(
-            try await evaluateString(web, jsRpc("manuscript/get", "['All', false, null, null, null, null]")),
+            try await evaluateString(web, jsRpc("manuscript/get", "['All', null, null, null, null, null]")),
             "manuscript/get (after restart)")
         XCTAssertTrue(manuscript.contains("خالد الأنطاكي") || manuscript.contains("Ibn Jubayr"),
                       "Arabic text did NOT survive the cold restart: \(manuscript.prefix(800))")
